@@ -1,0 +1,87 @@
+#cloud-config
+
+datasource:
+  Ec2:
+    timeout: 60
+    max_wait: 60
+    metadata_urls:
+      - http://169.254.169.254
+      - http://instance-data
+
+package_update: true
+package_upgrade: true
+
+packages:
+- docker.io
+- jq
+- awscli
+
+write_files:
+- path: /etc/aws/aws.conf
+  permissions: '0644'
+  content: |
+    [Global]
+    Zone = ${aws_region}
+- path: /etc/redis/sentinel.conf
+  permissions: '0644'
+  content: |
+    # Redis Sentinel configuration file
+    port 26379
+    protected-mode no
+    dir /var/lib/redis
+    sentinel announce-ip __REDIS_NODE_IP__
+    sentinel announce-port 26379
+    sentinel monitor master __REDIS_MASTER_IP__ 6379 2
+    sentinel down-after-milliseconds master 30000
+    sentinel parallel-syncs master 2
+    sentinel failover-timeout master 180000
+- path: /etc/default/redis-server
+  permissions: '0644'
+  content: |
+    # redis-server configure options
+- path: /etc/systemd/system/redis.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=The Redis Server container
+    After=docker.service
+    Requires=docker.service
+    PartOf=docker.service
+    [Service]
+    EnvironmentFile=/etc/default/redis-server
+    ExecStartPre=-/usr/bin/docker rm -f redis-server
+    ExecStart=/usr/bin/docker run --name redis-server --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=host -p 6379:6379 -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
+    ExecStop=/usr/bin/docker stop redis-server
+    SyslogIdentifier=redis_container
+    Restart=always
+    RestartSec=5s
+    [Install]
+    WantedBy=docker.service
+
+runcmd:
+- export AWS_DEFAULT_REGION=${aws_region}
+- INSTANCE_ID=$(curl -Lfs http://169.254.169.254/latest/meta-data/instance-id)
+- >
+  echo '{
+    "Comment": "auto updated @ '$(date)'",
+    "Changes": [{
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "'$(curl -Lfs http://169.254.169.254/latest/meta-data/local-hostname)'",
+        "Type": "A",
+        "TTL": 60,
+        "ResourceRecords": [{
+          "Value": "'$(curl -Lfs http://169.254.169.254/latest/meta-data/local-ipv4)'"
+        }]
+      }
+    }]
+  }' > /tmp/route53_update.json &&
+  aws route53 change-resource-record-sets --hosted-zone-id ${dns_zone_id} --change-batch file:///tmp/route53_update.json
+- mkdir /var/lib/redis
+- REDIS_NODE=$(curl -Lfs http://169.254.169.254/latest/meta-data/local-ipv4)
+- REDIS_MASTER=$(aws ec2 describe-instances --instance-ids "`aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${cluster_asg} | jq -r '[.AutoScalingGroups[].Instances[].InstanceId]'`" --filters Name=instance-state-name,Values=running | jq -r '[.Reservations[].Instances[] | {"InstanceId": .InstanceId, "PrivateIpAddress": .PrivateIpAddress, "LaunchTime": .LaunchTime | sub(".000"; "") | fromdate}] | sort_by(.LaunchTime) | first .PrivateIpAddress')
+- sed -ie 's/__REDIS_NODE_IP__/$REDIS_NODE/g' /etc/redis/sentinel.conf
+- sed -ie 's/__REDIS_MASTER_IP__/$REDIS_MASTER/g' /etc/redis/sentinel.conf
+- systemctl daemon-reload
+- systemctl enable redis-server
+- systemctl start redis-server
