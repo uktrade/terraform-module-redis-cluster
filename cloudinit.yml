@@ -22,6 +22,13 @@ write_files:
   content: |
     [Global]
     Zone = ${aws_region}
+- path: /etc/redis/redis.conf
+  permissions: '0644'
+  content: |
+    # redis-server configuration file
+    rename-command CONFIG ""
+    rename-command SHUTDOWN ""
+  - path: /etc/systemd/system/redis-server.service
 - path: /etc/redis/sentinel.conf
   permissions: '0666'
   content: |
@@ -39,8 +46,6 @@ write_files:
   permissions: '0644'
   content: |
     # redis-server configure options
-    rename-command CONFIG ""
-    rename-command SHUTDOWN ""
 - path: /etc/systemd/system/redis-server.service
   permissions: '0644'
   content: |
