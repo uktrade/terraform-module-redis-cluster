@@ -45,6 +45,10 @@ write_files:
   permissions: '0644'
   content: |
     # redis-server configure options
+- path: /etc/default/redis-sentinel
+  permissions: '0644'
+  content: |
+    # redis-sentinel configure options
 - path: /etc/systemd/system/redis-server.service
   permissions: '0644'
   content: |
@@ -58,7 +62,7 @@ write_files:
     ExecStartPre=-/usr/bin/docker rm -f redis-server
     ExecStart=/usr/bin/docker run --name redis-server --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=host -p 6379:6379 redis:${redis_version}
     ExecStop=/usr/bin/docker stop redis-server
-    SyslogIdentifier=redis_server
+    SyslogIdentifier=redis-server
     Restart=always
     RestartSec=5s
     [Install]
@@ -68,15 +72,15 @@ write_files:
   content: |
     [Unit]
     Description=The Redis Sentinel container
-    After=redis-server.service
-    Requires=redis-server.service
-    PartOf=redis-server.service
+    After=docker.service
+    Requires=docker.service
+    PartOf=docker.service
     [Service]
-    EnvironmentFile=/etc/default/redis-server
+    EnvironmentFile=/etc/default/redis-sentinel
     ExecStartPre=-/usr/bin/docker rm -f redis-sentinel
-    ExecStart=/usr/bin/docker run --name redis-sentinel --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:z --env-file=/etc/default/redis-server --network=host -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
+    ExecStart=/usr/bin/docker run --name redis-sentinel --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:z --env-file=/etc/default/redis-sentinel --network=host -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
     ExecStop=/usr/bin/docker stop redis-sentinel
-    SyslogIdentifier=redis_sentinel
+    SyslogIdentifier=redis-sentinel
     Restart=always
     RestartSec=5s
     [Install]
