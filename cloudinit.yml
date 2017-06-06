@@ -114,7 +114,7 @@ runcmd:
 - sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}/g" /etc/systemd/system/redis-server.service
 - sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}/g" /etc/systemd/system/redis-sentinel.service
 - >
-  if [ "$REDIS_MASTER" == "$REDIS_NODE" ]; then
+  if [ "$REDIS_MASTER" = "$REDIS_NODE" ]; then
     sed -i "s/__REDIS_MASTER_REPLICATION__//g" /etc/systemd/system/redis-server.service
   else
     sed -i "s/__REDIS_MASTER_REPLICATION__/--slaveof $REDIS_MASTER 6379/g" /etc/systemd/system/redis-server.service
