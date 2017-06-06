@@ -28,7 +28,7 @@ data "template_file" "redis-cloudinit" {
 }
 
 resource "aws_launch_configuration" "redis" {
-  name_prefix = "${var.aws_conf["domain"]}-redis-"
+  name_prefix = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}-"
   image_id = "${data.aws_ami.redis-ami.id}"
   instance_type = "${var.aws_conf["instance_type"]}"
   key_name = "${var.aws_conf["key_name"]}"
@@ -103,7 +103,7 @@ resource "aws_security_group" "redis" {
   }
 
   tags {
-    Name = "${var.aws_conf["domain"]}-redis-${var.redis_conf["id"]}"
+    Name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     Stack = "${var.aws_conf["domain"]}"
   }
   lifecycle {
