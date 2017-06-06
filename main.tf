@@ -103,6 +103,13 @@ resource "aws_security_group" "redis" {
     security_groups = ["${aws_security_group.redis-elb.id}"]
   }
 
+  ingress {
+    from_port = 6379
+    to_port = 6379
+    protocol = "tcp"
+    security_groups = ["${var.vpc_conf["security_group"]}"]
+  }
+
   tags {
     Name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     Stack = "${var.aws_conf["domain"]}"
@@ -117,8 +124,8 @@ resource "aws_security_group" "redis-elb" {
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
-    from_port = 6379
-    to_port = 6379
+    from_port = 26379
+    to_port = 26379
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -142,7 +149,7 @@ resource "aws_elb" "redis" {
   ]
 
   listener {
-    lb_port            = 6379
+    lb_port            = 26379
     lb_protocol        = "tcp"
     instance_port      = 26379
     instance_protocol  = "tcp"
