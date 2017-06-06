@@ -60,7 +60,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-server
     ExecStartPre=-/usr/bin/docker rm -f redis-server
-    ExecStart=/usr/bin/docker run --name redis-server --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=host -p 6379:6379 redis:${redis_version}
+    ExecStart=/usr/bin/docker run --name redis-server --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=host -p 6379:6379 redis:${redis_version} --slaveof __REDIS_MASTER_IP__ 6379
     ExecStop=/usr/bin/docker stop redis-server
     SyslogIdentifier=redis-server
     Restart=always
@@ -113,6 +113,8 @@ runcmd:
 - sed -i "s/__REDIS_MASTER_IP__/$REDIS_MASTER/g" /etc/redis/sentinel.conf
 - sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}" /etc/systemd/system/redis-server.service
 - sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}" /etc/systemd/system/redis-sentinel.service
+- sed -i "s/__REDIS_MASTER_IP__/$REDIS_MASTER/g" /etc/systemd/system/redis-server.service
+- sed -i "s/__REDIS_MASTER_IP__/$REDIS_MASTER/g" /etc/systemd/system/redis-sentinel.service
 - systemctl daemon-reload
 - systemctl enable redis-server redis-sentinel
 - systemctl start redis-server redis-sentinel
