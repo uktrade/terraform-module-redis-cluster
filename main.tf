@@ -53,10 +53,10 @@ resource "aws_launch_configuration" "redis" {
 resource "aws_autoscaling_group" "redis" {
   name = "${var.aws_conf["domain"]}-redis"
   launch_configuration = "${aws_launch_configuration.redis.name}"
-  vpc_zone_identifier = ["${data.aws_subnet.redis_az.id}"]
-  min_size = "${var.reds_conf["capacity"]}"
-  max_size = "${var.reds_conf["capacity"]}"
-  desired_capacity = "${var.reds_conf["capacity"]}"
+  vpc_zone_identifier = ["${split(",", var.vpc_conf[lookup(var.subnet-type, var.redis_conf["internal"])])}"]
+  min_size = "${var.redis_conf["capacity"]}"
+  max_size = "${var.redis_conf["capacity"]}"
+  desired_capacity = "${var.redis_conf["capacity"]}"
   wait_for_capacity_timeout = 0
 
   tag {
