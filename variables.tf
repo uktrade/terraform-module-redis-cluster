@@ -11,6 +11,7 @@ variable "vpc_conf" {
 variable "redis_conf" {
   type = "map"
   default = {
+    id = "redis"
     version = "latest"
     capacity = "3"
     internal = "true"

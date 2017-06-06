@@ -51,7 +51,7 @@ resource "aws_launch_configuration" "redis" {
 }
 
 resource "aws_autoscaling_group" "redis" {
-  name = "${var.aws_conf["domain"]}-redis"
+  name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
   launch_configuration = "${aws_launch_configuration.redis.name}"
   vpc_zone_identifier = ["${split(",", var.vpc_conf[lookup(var.subnet-type, var.redis_conf["internal"])])}"]
   min_size = "${var.redis_conf["capacity"]}"
@@ -61,7 +61,7 @@ resource "aws_autoscaling_group" "redis" {
 
   tag {
     key = "Name"
-    value = "${var.aws_conf["domain"]}-redis"
+    value = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     propagate_at_launch = true
   }
   tag {
@@ -75,11 +75,6 @@ resource "aws_autoscaling_group" "redis" {
     propagate_at_launch = true
   }
   tag {
-    key = "host-type"
-    value = "redis"
-    propagate_at_launch = true
-  }
-  tag {
     key = "svc"
     value = "redis"
     propagate_at_launch = true
@@ -90,7 +85,7 @@ resource "aws_autoscaling_group" "redis" {
 }
 
 resource "aws_security_group" "redis" {
-  name = "${var.aws_conf["domain"]}-redis"
+  name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
@@ -108,7 +103,7 @@ resource "aws_security_group" "redis" {
   }
 
   tags {
-    Name = "${var.aws_conf["domain"]}-redis"
+    Name = "${var.aws_conf["domain"]}-redis-${var.redis_conf["id"]}"
     Stack = "${var.aws_conf["domain"]}"
   }
   lifecycle {
@@ -117,7 +112,7 @@ resource "aws_security_group" "redis" {
 }
 
 resource "aws_security_group" "redis-elb" {
-  name = "${var.aws_conf["domain"]}-redis-elb"
+  name = "${var.aws_conf["domain"]}-redis-${var.redis_conf["id"]}-elb"
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
@@ -137,7 +132,7 @@ resource "aws_security_group" "redis-elb" {
 }
 
 resource "aws_elb" "redis" {
-  name = "${element(split(".", var.aws_conf["domain"]), 0)}-redis-elb"
+  name = "${element(split(".", var.aws_conf["domain"]), 0)}-redis-${var.redis_conf["id"]}-elb"
   subnets = ["${split(",", var.vpc_conf[lookup(var.subnet-type, var.redis_conf["internal"])])}"]
 
   security_groups = [
@@ -166,13 +161,13 @@ resource "aws_elb" "redis" {
 
   tags {
     Stack = "${var.aws_conf["domain"]}"
-    Name = "${var.aws_conf["domain"]}-redis-elb"
+    Name = "${var.aws_conf["domain"]}-redis-${var.redis_conf["id"]}-elb"
   }
 }
 
 resource "aws_route53_record" "redis" {
    zone_id = "${var.vpc_conf["zone_id"]}"
-   name = "redis.${var.aws_conf["domain"]}"
+   name = "${var.redis_conf["id"]}.${var.aws_conf["domain"]}"
    type = "A"
    alias {
      name = "${aws_elb.redis.dns_name}"
