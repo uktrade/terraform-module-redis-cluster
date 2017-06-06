@@ -112,7 +112,7 @@ resource "aws_security_group" "redis" {
 }
 
 resource "aws_security_group" "redis-elb" {
-  name = "${var.aws_conf["domain"]}-redis-${var.redis_conf["id"]}-elb"
+  name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}-elb"
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
@@ -123,7 +123,7 @@ resource "aws_security_group" "redis-elb" {
   }
 
   tags {
-    Name = "${var.aws_conf["domain"]}-redis"
+    Name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}-elb"
     Stack = "${var.aws_conf["domain"]}"
   }
   lifecycle {
@@ -132,7 +132,7 @@ resource "aws_security_group" "redis-elb" {
 }
 
 resource "aws_elb" "redis" {
-  name = "${element(split(".", var.aws_conf["domain"]), 0)}-redis-${var.redis_conf["id"]}-elb"
+  name = "${element(split(".", var.aws_conf["domain"]), 0)}-${var.redis_conf["id"]}-elb"
   subnets = ["${split(",", var.vpc_conf[lookup(var.subnet-type, var.redis_conf["internal"])])}"]
 
   security_groups = [
@@ -161,7 +161,7 @@ resource "aws_elb" "redis" {
 
   tags {
     Stack = "${var.aws_conf["domain"]}"
-    Name = "${var.aws_conf["domain"]}-redis-${var.redis_conf["id"]}-elb"
+    Name = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}-elb"
   }
 }
 
