@@ -50,7 +50,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-server
     ExecStartPre=-/usr/bin/docker rm -f redis-server
-    ExecStart=/usr/bin/docker run --name redis-server --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:z --env-file=/etc/default/redis-server --network=host -p 6379:6379 -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
+    ExecStart=/usr/bin/docker run --name redis-server --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:z --env-file=/etc/default/redis-server --network=host -p 6379:6379 -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
     ExecStop=/usr/bin/docker stop redis-server
     SyslogIdentifier=redis_container
     Restart=always
@@ -83,6 +83,7 @@ runcmd:
   REDIS_MASTER="$(aws ec2 describe-instances --instance-ids "`aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${cluster_asg} | jq -r '[.AutoScalingGroups[].Instances[].InstanceId]'`" --filters Name=instance-state-name,Values=running | jq -r '[.Reservations[].Instances[] | {"InstanceId": .InstanceId, "PrivateIpAddress": .PrivateIpAddress, "LaunchTime": .LaunchTime | sub(".000"; "") | fromdate}] | sort_by(.LaunchTime) | first .PrivateIpAddress')"
 - sed -i "s/__REDIS_NODE_IP__/$REDIS_NODE/g" /etc/redis/sentinel.conf
 - sed -i "s/__REDIS_MASTER_IP__/$REDIS_MASTER/g" /etc/redis/sentinel.conf
+- sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}" /etc/systemd/system/redis-server.service
 - systemctl daemon-reload
 - systemctl enable redis-server
 - systemctl start redis-server
