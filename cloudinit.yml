@@ -28,7 +28,6 @@ write_files:
     # redis-server configuration file
     rename-command CONFIG ""
     rename-command SHUTDOWN ""
-  - path: /etc/systemd/system/redis-server.service
 - path: /etc/redis/sentinel.conf
   permissions: '0666'
   content: |
