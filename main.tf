@@ -58,6 +58,7 @@ resource "aws_autoscaling_group" "redis" {
   max_size = "${var.redis_conf["capacity"]}"
   desired_capacity = "${var.redis_conf["capacity"]}"
   wait_for_capacity_timeout = 0
+  load_balancers = ["${aws_elb.redis.id}"]
 
   tag {
     key = "Name"
@@ -96,8 +97,8 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = 6379
-    to_port = 6379
+    from_port = 26379
+    to_port = 26379
     protocol = "tcp"
     security_groups = ["${aws_security_group.redis-elb.id}"]
   }
@@ -143,7 +144,7 @@ resource "aws_elb" "redis" {
   listener {
     lb_port            = 6379
     lb_protocol        = "tcp"
-    instance_port      = 6379
+    instance_port      = 26379
     instance_protocol  = "tcp"
   }
 
@@ -151,7 +152,7 @@ resource "aws_elb" "redis" {
     healthy_threshold   = 5
     unhealthy_threshold = 2
     timeout             = 2
-    target              = "TCP:6379"
+    target              = "TCP:26379"
     interval            = 10
   }
 
