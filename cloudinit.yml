@@ -32,13 +32,15 @@ write_files:
     sentinel announce-ip __REDIS_NODE_IP__
     sentinel announce-port 26379
     sentinel monitor master __REDIS_MASTER_IP__ 6379 2
-    sentinel down-after-milliseconds master 30000
+    sentinel down-after-milliseconds master 5000
     sentinel parallel-syncs master 2
     sentinel failover-timeout master 180000
 - path: /etc/default/redis-server
   permissions: '0644'
   content: |
     # redis-server configure options
+    rename-command CONFIG ""
+    rename-command SHUTDOWN ""
 - path: /etc/systemd/system/redis-server.service
   permissions: '0644'
   content: |
