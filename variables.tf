@@ -24,3 +24,10 @@ variable "subnet-type" {
     "false" = "subnets_public"
   }
 }
+
+variable "public_ip" {
+  default = {
+    "true" = "false"
+    "false" = "true"
+  }
+}

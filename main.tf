@@ -43,7 +43,7 @@ resource "aws_launch_configuration" "redis" {
     delete_on_termination = true
   }
   user_data = "${data.template_file.redis-cloudinit.rendered}"
-  associate_public_ip_address = true
+  associate_public_ip_address = "${lookup(var.public_ip, var.redis_conf["internal"])}"
 
   lifecycle {
     create_before_destroy = true
