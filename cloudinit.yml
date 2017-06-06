@@ -78,8 +78,8 @@ runcmd:
   }' > /tmp/route53_update.json &&
   aws route53 change-resource-record-sets --hosted-zone-id ${dns_zone_id} --change-batch file:///tmp/route53_update.json
 - mkdir /var/lib/redis
-- REDIS_NODE=$(curl -Lfs http://169.254.169.254/latest/meta-data/local-ipv4)
-- REDIS_MASTER=$(aws ec2 describe-instances --instance-ids "`aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${cluster_asg} | jq -r '[.AutoScalingGroups[].Instances[].InstanceId]'`" --filters Name=instance-state-name,Values=running | jq -r '[.Reservations[].Instances[] | {"InstanceId": .InstanceId, "PrivateIpAddress": .PrivateIpAddress, "LaunchTime": .LaunchTime | sub(".000"; "") | fromdate}] | sort_by(.LaunchTime) | first .PrivateIpAddress')
+- REDIS_NODE="$(curl -Lfs http://169.254.169.254/latest/meta-data/local-ipv4)"
+- REDIS_MASTER="$(aws ec2 describe-instances --instance-ids "`aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${cluster_asg} | jq -r '[.AutoScalingGroups[].Instances[].InstanceId]'`" --filters Name=instance-state-name,Values=running | jq -r '[.Reservations[].Instances[] | {"InstanceId": .InstanceId, "PrivateIpAddress": .PrivateIpAddress, "LaunchTime": .LaunchTime | sub(".000"; "") | fromdate}] | sort_by(.LaunchTime) | first .PrivateIpAddress')"
 - sed -ie 's/__REDIS_NODE_IP__/$REDIS_NODE/g' /etc/redis/sentinel.conf
 - sed -ie 's/__REDIS_MASTER_IP__/$REDIS_MASTER/g' /etc/redis/sentinel.conf
 - systemctl daemon-reload

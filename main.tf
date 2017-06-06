@@ -22,7 +22,7 @@ data "template_file" "redis-cloudinit" {
     aws_region = "${var.vpc_conf["region"]}"
     dns_zone_id = "${var.vpc_conf["zone_id"]}"
     cluster_id = "${var.aws_conf["domain"]}"
-    cluster_asg = "${var.aws_conf["domain"]}-redis"
+    cluster_asg = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     redis_version = "${var.redis_conf["version"]}"
   }
 }
