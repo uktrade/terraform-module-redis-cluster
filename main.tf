@@ -40,7 +40,7 @@ resource "aws_launch_configuration" "redis" {
   root_block_device {
     volume_type = "gp2"
     volume_size = 20
-    delete_on_termination = false
+    delete_on_termination = true
   }
   user_data = "${data.template_file.redis-cloudinit.rendered}"
   associate_public_ip_address = true
