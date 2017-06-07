@@ -24,6 +24,9 @@ data "template_file" "redis-cloudinit" {
     cluster_id = "${var.aws_conf["domain"]}"
     cluster_asg = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     redis_version = "${var.redis_conf["version"]}"
+    redis_port = "${var.redis_conf["port"]}"
+    sentinel_port = "${var.redis_conf["sentinel.port"]}"
+    tls_port = "${var.redis_conf["tls.port"]}"
     tls_key = "${replace(file(var.redis_conf["tls.private_key"]), "\n", "\\n")}"
     tls_cert = "${replace(file(var.redis_conf["tls.certificate"]), "\n", "\\n")}"
   }
@@ -99,15 +102,15 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = 26379
-    to_port = 26379
+    from_port = "${var.redis_conf["sentinel.port"]}"
+    to_port = "${var.redis_conf["sentinel.port"]}"
     protocol = "tcp"
     security_groups = ["${aws_security_group.redis-elb.id}"]
   }
 
   ingress {
-    from_port = 16379
-    to_port = 16379
+    from_port = "${var.redis_conf["tls.port"]}"
+    to_port = "${var.redis_conf["tls.port"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -126,8 +129,8 @@ resource "aws_security_group" "redis-elb" {
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
-    from_port = 26379
-    to_port = 26379
+    from_port = "${var.redis_conf["sentinel.port"]}"
+    to_port = "${var.redis_conf["sentinel.port"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -151,9 +154,9 @@ resource "aws_elb" "redis" {
   ]
 
   listener {
-    lb_port            = 26379
+    lb_port            = "${var.redis_conf["sentinel.port"]}"
     lb_protocol        = "tcp"
-    instance_port      = 26379
+    instance_port      = "${var.redis_conf["sentinel.port"]}"
     instance_protocol  = "tcp"
   }
 
@@ -161,7 +164,7 @@ resource "aws_elb" "redis" {
     healthy_threshold   = 5
     unhealthy_threshold = 2
     timeout             = 2
-    target              = "TCP:26379"
+    target              = "TCP:${var.redis_conf["sentinel.port"]}"
     interval            = 10
   }
 
