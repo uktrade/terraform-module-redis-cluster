@@ -67,7 +67,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-server
     ExecStartPre=-/usr/bin/docker rm -f redis-server
-    ExecStart=/usr/bin/docker run --name redis-server --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=host -p 6379:6379 redis:${redis_version} __REDIS_MASTER_REPLICATION__
+    ExecStart=/usr/bin/docker run --name redis-server --hostname $(hostname).${cluster_id} --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=host -p 6379:6379 redis:${redis_version} __REDIS_MASTER_REPLICATION__
     ExecStop=/usr/bin/docker stop redis-server
     SyslogIdentifier=redis-server
     Restart=always
@@ -85,7 +85,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-sentinel
     ExecStartPre=-/usr/bin/docker rm -f redis-sentinel
-    ExecStart=/usr/bin/docker run --name redis-sentinel --hostname __REDIS_NODE__ --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:z --env-file=/etc/default/redis-sentinel --network=host -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
+    ExecStart=/usr/bin/docker run --name redis-sentinel --hostname $(hostname).${cluster_id} --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:z --env-file=/etc/default/redis-sentinel --network=host -p 26379:26379 redis:${redis_version} /etc/redis/sentinel.conf --sentinel
     ExecStop=/usr/bin/docker stop redis-sentinel
     SyslogIdentifier=redis-sentinel
     Restart=always
@@ -103,7 +103,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-stunnel
     ExecStartPre=-/usr/bin/docker rm -f redis-stunnel
-    ExecStart=/usr/bin/docker run --name redis-stunnel --hostname __REDIS_NODE__ --rm -v /etc/stunnel:/etc/stunnel:z --env-file=/etc/default/redis-stunnel --network=host -p 16379:16379 dweomer/stunnel
+    ExecStart=/usr/bin/docker run --name redis-stunnel --hostname $(hostname).${cluster_id} --rm -v /etc/stunnel:/etc/stunnel:z --env-file=/etc/default/redis-stunnel --network=host -p 16379:16379 dweomer/stunnel
     ExecStop=/usr/bin/docker stop redis-stunnel
     SyslogIdentifier=redis-stunnel
     Restart=always
@@ -136,9 +136,6 @@ runcmd:
   REDIS_MASTER="$(aws ec2 describe-instances --instance-ids "`aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${cluster_asg} | jq -r '[.AutoScalingGroups[].Instances[].InstanceId]'`" --filters Name=instance-state-name,Values=running | jq -r '[.Reservations[].Instances[] | {"InstanceId": .InstanceId, "PrivateIpAddress": .PrivateIpAddress, "LaunchTime": .LaunchTime | sub(".000"; "") | fromdate}] | sort_by(.LaunchTime) | first .PrivateIpAddress')"
 - sed -i "s/__REDIS_NODE_IP__/$REDIS_NODE/g" /etc/redis/sentinel.conf
 - sed -i "s/__REDIS_MASTER_IP__/$REDIS_MASTER/g" /etc/redis/sentinel.conf
-- sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}/g" /etc/systemd/system/redis-server.service
-- sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}/g" /etc/systemd/system/redis-sentinel.service
-- sed -i "s/__REDIS_NODE__/$(hostname).${cluster_id}/g" /etc/systemd/system/redis-stunnel.service
 - >
   if [ "$REDIS_MASTER" = "$REDIS_NODE" ]; then
     sed -i "s/__REDIS_MASTER_REPLICATION__//g" /etc/systemd/system/redis-server.service
