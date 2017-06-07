@@ -110,6 +110,10 @@ write_files:
     RestartSec=5s
     [Install]
     WantedBy=docker.service
+- path: /etc/stunnel/stunnel.key
+  permissions: '0600'
+- path: /etc/stunnel/stunnel.pem
+  permissions: '0640'
 
 runcmd:
 - export AWS_DEFAULT_REGION=${aws_region}
@@ -142,6 +146,8 @@ runcmd:
   else
     sed -i "s/__REDIS_MASTER_REPLICATION__/--slaveof $REDIS_MASTER 6379/g" /etc/systemd/system/redis-server.service
   fi
+- echo '${tls_key}' > /etc/stunnel/stunnel.key
+- echo '${tls_cert}' > /etc/stunnel/stunnel.pem
 - systemctl daemon-reload
 - systemctl enable redis-server redis-sentinel redis-stunnel
 - systemctl start redis-server redis-sentinel redis-stunnel
