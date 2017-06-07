@@ -104,8 +104,8 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = 6379
-    to_port = 6379
+    from_port = 16379
+    to_port = 16379
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
