@@ -1,16 +1,16 @@
 resource "aws_iam_role" "node-role" {
-  name = "${var.aws_conf["domain"]}-redis-role"
+  name = "${var.aws_conf["domain"]}-redis-role-${var.redis_conf["id"]}"
   assume_role_policy = "${file("${path.module}/policies/default-role.json")}"
 }
 
 resource "aws_iam_role_policy" "node-default-policy" {
-  name = "${var.aws_conf["domain"]}-redis-default-policy"
+  name = "${var.aws_conf["domain"]}-redis-default-policy-${var.redis_conf["id"]}"
   policy = "${file("${path.module}/policies/default-policy.json")}"
   role = "${aws_iam_role.node-role.id}"
 }
 
 resource "aws_iam_instance_profile" "node-profile" {
-  name = "${var.aws_conf["domain"]}-redis-profile"
+  name = "${var.aws_conf["domain"]}-redis-profile-${var.redis_conf["id"]}"
   path = "/"
   role = "${aws_iam_role.node-role.name}"
 
@@ -28,7 +28,7 @@ data "template_file" "route53_policy" {
 }
 
 resource "aws_iam_role_policy" "route53" {
-  name = "${var.aws_conf["domain"]}-redis-route53-policy"
+  name = "${var.aws_conf["domain"]}-redis-route53-policy-${var.redis_conf["id"]}"
   policy = "${data.template_file.route53_policy.rendered}"
   role = "${aws_iam_role.node-role.name}"
 }
