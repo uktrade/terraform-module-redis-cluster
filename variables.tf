@@ -11,15 +11,15 @@ variable "vpc_conf" {
 variable "redis_conf" {
   type = "map"
   default = {
-    id = "redis"
+    id = "redis-exportopps"
     version = "latest"
     capacity = "3"
     internal = "true"
     port = "6379"
     sentinel.port = "26379"
     tls.port = "16379"
-    tls.private_key = ".stunnel.key"
-    tls.certificate = ".stunnel.pem"
+    tls.private_key = ".exportopps.stunnel.key"
+    tls.certificate = ".exportopps.stunnel.pem"
   }
 }
 
