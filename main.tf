@@ -26,9 +26,7 @@ data "template_file" "redis-cloudinit" {
     redis_version = "${var.redis_conf["version"]}"
     redis_port = "${var.redis_conf["port"]}"
     sentinel_port = "${var.redis_conf["sentinel.port"]}"
-    tls_port = "${var.redis_conf["tls.port"]}"
-    tls_key = "${replace(file(var.redis_conf["tls.private_key"]), "\n", "\\n")}"
-    tls_cert = "${replace(file(var.redis_conf["tls.certificate"]), "\n", "\\n")}"
+    redis_pass = "${var.redis_conf["redis.password"]}"
   }
 }
 
@@ -109,8 +107,8 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = "${var.redis_conf["tls.port"]}"
-    to_port = "${var.redis_conf["tls.port"]}"
+    from_port = "${var.redis_conf["port"]}"
+    to_port = "${var.redis_conf["port"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }

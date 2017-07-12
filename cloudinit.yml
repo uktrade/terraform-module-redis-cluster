@@ -28,6 +28,7 @@ write_files:
     # redis-server configuration file
     rename-command CONFIG ""
     rename-command SHUTDOWN ""
+    requirepass "${redis_pass}"
 - path: /etc/redis/sentinel.conf
   permissions: '0666'
   content: |
@@ -49,13 +50,6 @@ write_files:
   permissions: '0644'
   content: |
     # redis-sentinel configure options
-- path: /etc/default/redis-stunnel
-  permissions: '0644'
-  content: |
-    # redis-stunnel configure options
-    STUNNEL_SERVICE=redis-tls
-    STUNNEL_ACCEPT=${tls_port}
-    STUNNEL_CONNECT=localhost:${redis_port}
 - path: /etc/systemd/system/redis-server.service
   permissions: '0644'
   content: |
@@ -92,28 +86,6 @@ write_files:
     RestartSec=5s
     [Install]
     WantedBy=docker.service
-- path: /etc/systemd/system/redis-stunnel.service
-  permissions: '0644'
-  content: |
-    [Unit]
-    Description=The Redis STunnel container
-    After=redis-server.service
-    Requires=redis-server.service
-    PartOf=docker.service
-    [Service]
-    EnvironmentFile=/etc/default/redis-stunnel
-    ExecStartPre=-/usr/bin/docker rm -f redis-stunnel
-    ExecStart=/usr/bin/docker run --name redis-stunnel --hostname $(hostname).${cluster_id} --rm -v /etc/stunnel:/etc/stunnel:z --env-file=/etc/default/redis-stunnel --network=host -p ${tls_port}:${tls_port} dweomer/stunnel
-    ExecStop=/usr/bin/docker stop redis-stunnel
-    SyslogIdentifier=redis-stunnel
-    Restart=always
-    RestartSec=5s
-    [Install]
-    WantedBy=docker.service
-- path: /etc/stunnel/stunnel.key
-  permissions: '0600'
-- path: /etc/stunnel/stunnel.pem
-  permissions: '0640'
 
 runcmd:
 - export AWS_DEFAULT_REGION=${aws_region}
@@ -146,8 +118,6 @@ runcmd:
   else
     sed -i "s/__REDIS_MASTER_REPLICATION__/--slaveof $REDIS_MASTER ${redis_port}/g" /etc/systemd/system/redis-server.service
   fi
-- echo '${tls_key}' > /etc/stunnel/stunnel.key
-- echo '${tls_cert}' > /etc/stunnel/stunnel.pem
 - systemctl daemon-reload
-- systemctl enable redis-server redis-sentinel redis-stunnel
-- systemctl start redis-server redis-sentinel redis-stunnel
+- systemctl enable redis-server redis-sentinel
+- systemctl start redis-server redis-sentinel

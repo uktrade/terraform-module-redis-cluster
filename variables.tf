@@ -17,9 +17,7 @@ variable "redis_conf" {
     internal = "true"
     port = "6379"
     sentinel.port = "26379"
-    tls.port = "16379"
-    tls.private_key = ".stunnel.key"
-    tls.certificate = ".stunnel.pem"
+    redis.password = "pass"
   }
 }
 
