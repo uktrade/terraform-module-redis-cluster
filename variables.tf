@@ -16,8 +16,8 @@ variable "redis_conf" {
     capacity = "3"
     internal = "true"
     port = "6379"
-    sentinel.port = "26379"
-    redis.password = "pass"
+    sentinel = "26379"
+    auth = "pass"
   }
 }
 

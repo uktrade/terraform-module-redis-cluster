@@ -25,8 +25,8 @@ data "template_file" "redis-cloudinit" {
     cluster_asg = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     redis_version = "${var.redis_conf["version"]}"
     redis_port = "${var.redis_conf["port"]}"
-    sentinel_port = "${var.redis_conf["sentinel.port"]}"
-    redis_pass = "${var.redis_conf["redis.password"]}"
+    sentinel_port = "${var.redis_conf["sentinel"]}"
+    redis_pass = "${var.redis_conf["auth"]}"
   }
 }
 
@@ -100,8 +100,8 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = "${var.redis_conf["sentinel.port"]}"
-    to_port = "${var.redis_conf["sentinel.port"]}"
+    from_port = "${var.redis_conf["sentinel"]}"
+    to_port = "${var.redis_conf["sentinel"]}"
     protocol = "tcp"
     security_groups = ["${aws_security_group.redis-elb.id}"]
   }
@@ -127,8 +127,8 @@ resource "aws_security_group" "redis-elb" {
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
-    from_port = "${var.redis_conf["sentinel.port"]}"
-    to_port = "${var.redis_conf["sentinel.port"]}"
+    from_port = "${var.redis_conf["sentinel"]}"
+    to_port = "${var.redis_conf["sentinel"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -152,9 +152,9 @@ resource "aws_elb" "redis" {
   ]
 
   listener {
-    lb_port            = "${var.redis_conf["sentinel.port"]}"
+    lb_port            = "${var.redis_conf["sentinel"]}"
     lb_protocol        = "tcp"
-    instance_port      = "${var.redis_conf["sentinel.port"]}"
+    instance_port      = "${var.redis_conf["sentinel"]}"
     instance_protocol  = "tcp"
   }
 
@@ -162,7 +162,7 @@ resource "aws_elb" "redis" {
     healthy_threshold   = 5
     unhealthy_threshold = 2
     timeout             = 2
-    target              = "TCP:${var.redis_conf["sentinel.port"]}"
+    target              = "TCP:${var.redis_conf["sentinel"]}"
     interval            = 10
   }
 
