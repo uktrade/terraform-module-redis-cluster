@@ -91,7 +91,7 @@ runcmd:
     "Changes": [{
       "Action": "UPSERT",
       "ResourceRecordSet": {
-        "Name": "'$(curl -Lfs http://169.254.169.254/latest/meta-data/local-hostname)'",
+        "Name": "'$(hostname)'",
         "Type": "A",
         "TTL": 60,
         "ResourceRecords": [{
