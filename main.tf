@@ -101,13 +101,6 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = "${var.redis_conf["sentinel.port"]}"
-    to_port = "${var.redis_conf["sentinel.port"]}"
-    protocol = "tcp"
-    security_groups = ["${aws_security_group.redis-elb.id}"]
-  }
-
-  ingress {
     from_port = "${var.redis_conf["tls.port"]}"
     to_port = "${var.redis_conf["tls.port"]}"
     protocol = "tcp"
@@ -128,8 +121,8 @@ resource "aws_security_group" "redis-elb" {
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
-    from_port = "${var.redis_conf["sentinel.port"]}"
-    to_port = "${var.redis_conf["sentinel.port"]}"
+    from_port = "${var.redis_conf["tls.port"]}"
+    to_port = "${var.redis_conf["tls.port"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -153,9 +146,9 @@ resource "aws_elb" "redis" {
   ]
 
   listener {
-    lb_port            = "${var.redis_conf["sentinel.port"]}"
+    lb_port            = "${var.redis_conf["tls.port"]}"
     lb_protocol        = "tcp"
-    instance_port      = "${var.redis_conf["sentinel.port"]}"
+    instance_port      = "${var.redis_conf["tls.port"]}"
     instance_protocol  = "tcp"
   }
 
@@ -163,7 +156,7 @@ resource "aws_elb" "redis" {
     healthy_threshold   = 5
     unhealthy_threshold = 2
     timeout             = 2
-    target              = "TCP:${var.redis_conf["sentinel.port"]}"
+    target              = "TCP:${var.redis_conf["tls.port"]}"
     interval            = 10
   }
 
