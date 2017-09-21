@@ -15,9 +15,9 @@ variable "redis_conf" {
     version = "latest"
     capacity = "1"
     internal = "true"
-    port = "16379"
+    port = "6379"
     auth = "pass"
-    tls.port = "6379"
+    tls.port = "16379"
     tls.private_key = ".stunnel.key"
     tls.certificate = ".stunnel.pem"
   }
