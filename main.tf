@@ -25,7 +25,6 @@ data "template_file" "redis-cloudinit" {
     cluster_asg = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     redis_version = "${var.redis_conf["version"]}"
     redis_port = "${var.redis_conf["port"]}"
-    sentinel_port = "${var.redis_conf["sentinel.port"]}"
     tls_port = "${var.redis_conf["tls.port"]}"
     tls_key = "${replace(file(var.redis_conf["tls.private_key"]), "\n", "\\n")}"
     tls_cert = "${replace(file(var.redis_conf["tls.certificate"]), "\n", "\\n")}"
