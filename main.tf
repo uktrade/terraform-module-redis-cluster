@@ -163,7 +163,7 @@ resource "aws_elb" "redis" {
 
   connection_draining = true
   cross_zone_load_balancing = true
-  internal = true
+  internal = "${redis_conf["internal"]}"
 
   tags {
     Stack = "${var.aws_conf["domain"]}"
