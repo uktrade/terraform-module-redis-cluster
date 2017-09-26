@@ -11,6 +11,14 @@ datasource:
 package_update: true
 package_upgrade: true
 
+fs_setup:
+  - label: data
+    filesystem: ext4
+    device: /dev/xvdd
+
+mounts:
+  - [ /dev/xvdd, /var/lib/redis, "auto" ]
+
 packages:
 - docker.io
 - jq
@@ -83,7 +91,6 @@ write_files:
   permissions: '0640'
 
 runcmd:
-- mkdir /var/lib/redis
 - echo '${tls_key}' > /etc/stunnel/stunnel.key
 - echo '${tls_cert}' > /etc/stunnel/stunnel.pem
 - systemctl daemon-reload
