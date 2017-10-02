@@ -66,7 +66,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-server
     ExecStartPre=-/usr/bin/docker rm -f redis-server
-    ExecStart=/usr/bin/docker run --name redis-server --hostname $(hostname).${cluster_id} --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=none -p ${redis_port}:${redis_port} redis:${redis_version} /etc/redis/redis.conf
+    ExecStart=/usr/bin/docker run --name redis-server --hostname $(hostname).${cluster_id} --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=default -p ${redis_port}:${redis_port} redis:${redis_version} /etc/redis/redis.conf
     ExecStop=/usr/bin/docker stop redis-server
     SyslogIdentifier=redis-server
     Restart=always
