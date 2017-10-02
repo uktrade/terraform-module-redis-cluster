@@ -8,6 +8,12 @@ datasource:
       - http://169.254.169.254
       - http://instance-data
 
+apt:
+  sources:
+    docker-ce.list:
+      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable"
+      keyid: 0EBFCD88
+
 package_update: true
 package_upgrade: true
 
@@ -20,7 +26,10 @@ mounts:
   - [ /dev/xvdd, /var/lib/redis, "auto" ]
 
 packages:
-- docker.io
+- linux-image-extra-virtual
+- apt-transport-https
+- software-properties-common
+- docker-ce
 - jq
 - awscli
 
@@ -57,7 +66,7 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-server
     ExecStartPre=-/usr/bin/docker rm -f redis-server
-    ExecStart=/usr/bin/docker run --name redis-server --hostname $(hostname).${cluster_id} --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=bridge -p ${redis_port}:${redis_port} redis:${redis_version} /etc/redis/redis.conf
+    ExecStart=/usr/bin/docker run --name redis-server --hostname $(hostname).${cluster_id} --rm -v /var/lib/redis:/var/lib/redis:z -v /etc/redis:/etc/redis:ro --env-file=/etc/default/redis-server --network=none -p ${redis_port}:${redis_port} redis:${redis_version} /etc/redis/redis.conf
     ExecStop=/usr/bin/docker stop redis-server
     SyslogIdentifier=redis-server
     Restart=always
@@ -75,14 +84,14 @@ write_files:
     [Service]
     EnvironmentFile=/etc/default/redis-spiped
     ExecStartPre=-/usr/bin/docker rm -f redis-spiped
-    ExecStart=/usr/bin/docker run --name redis-spiped --hostname $(hostname).${cluster_id} --rm -v /etc/spiped:/etc/spiped:z --env-file=/etc/default/redis-spiped --network=host -p ${redis_port}:${redis_port} --link redis-server spiped:alpine
+    ExecStart=/usr/bin/docker run --name redis-spiped --hostname $(hostname).${cluster_id} --rm -v /etc/spiped/.key:/spiped/key:ro --env-file=/etc/default/redis-spiped --network=bridge -p ${redis_port}:${redis_port} --link redis-server --init spiped:alpine -d -s '[0.0.0.0]:${redis_port}' -t 'redis-server:${redis_port}'
     ExecStop=/usr/bin/docker stop redis-spiped
     SyslogIdentifier=redis-spiped
     Restart=always
     RestartSec=5s
     [Install]
     WantedBy=docker.service
-- path: /spiped/key/spiped-keyfile
+- path: /etc/spiped/.key
   permissions: '0600'
   content: ${enc_key}
 
