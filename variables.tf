@@ -13,11 +13,14 @@ variable "redis_conf" {
   default = {
     id = "redis"
     version = "latest"
-    capacity = "3"
+    capacity = "1"
     internal = "true"
     port = "6379"
-    sentinel = "26379"
     auth = "pass"
+    storage = "5"
+    tls.port = "16379"
+    tls.private_key = ".stunnel.key"
+    tls.certificate = ".stunnel.pem"
   }
 }
 

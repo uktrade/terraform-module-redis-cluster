@@ -25,8 +25,10 @@ data "template_file" "redis-cloudinit" {
     cluster_asg = "${var.aws_conf["domain"]}-${var.redis_conf["id"]}"
     redis_version = "${var.redis_conf["version"]}"
     redis_port = "${var.redis_conf["port"]}"
-    sentinel_port = "${var.redis_conf["sentinel"]}"
     redis_pass = "${var.redis_conf["auth"]}"
+    tls_port = "${var.redis_conf["tls.port"]}"
+    tls_key = "${replace(file(var.redis_conf["tls.private_key"]), "\n", "\\n")}"
+    tls_cert = "${replace(file(var.redis_conf["tls.certificate"]), "\n", "\\n")}"
   }
 }
 
@@ -42,7 +44,14 @@ resource "aws_launch_configuration" "redis" {
   ]
   root_block_device {
     volume_type = "gp2"
-    volume_size = 20
+    volume_size = 8
+    delete_on_termination = true
+  }
+  ebs_block_device {
+    device_name = "/dev/sdd"
+    volume_type = "gp2"
+    volume_size = "${var.redis_conf["storage"]}"
+    encrypted = true
     delete_on_termination = true
   }
   user_data = "${data.template_file.redis-cloudinit.rendered}"
@@ -100,15 +109,8 @@ resource "aws_security_group" "redis" {
   }
 
   ingress {
-    from_port = "${var.redis_conf["sentinel"]}"
-    to_port = "${var.redis_conf["sentinel"]}"
-    protocol = "tcp"
-    security_groups = ["${aws_security_group.redis-elb.id}"]
-  }
-
-  ingress {
-    from_port = "${var.redis_conf["port"]}"
-    to_port = "${var.redis_conf["port"]}"
+    from_port = "${var.redis_conf["tls.port"]}"
+    to_port = "${var.redis_conf["tls.port"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -127,8 +129,8 @@ resource "aws_security_group" "redis-elb" {
   vpc_id = "${var.vpc_conf["id"]}"
 
   ingress {
-    from_port = "${var.redis_conf["sentinel"]}"
-    to_port = "${var.redis_conf["sentinel"]}"
+    from_port = "${var.redis_conf["tls.port"]}"
+    to_port = "${var.redis_conf["tls.port"]}"
     protocol = "tcp"
     security_groups = ["${var.vpc_conf["security_group"]}"]
   }
@@ -152,9 +154,9 @@ resource "aws_elb" "redis" {
   ]
 
   listener {
-    lb_port            = "${var.redis_conf["sentinel"]}"
+    lb_port            = "${var.redis_conf["tls.port"]}"
     lb_protocol        = "tcp"
-    instance_port      = "${var.redis_conf["sentinel"]}"
+    instance_port      = "${var.redis_conf["tls.port"]}"
     instance_protocol  = "tcp"
   }
 
@@ -162,13 +164,13 @@ resource "aws_elb" "redis" {
     healthy_threshold   = 5
     unhealthy_threshold = 2
     timeout             = 2
-    target              = "TCP:${var.redis_conf["sentinel"]}"
+    target              = "TCP:${var.redis_conf["tls.port"]}"
     interval            = 10
   }
 
   connection_draining = true
   cross_zone_load_balancing = true
-  internal = true
+  internal = "${var.redis_conf["internal"]}"
 
   tags {
     Stack = "${var.aws_conf["domain"]}"
